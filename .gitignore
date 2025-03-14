@@ -4,6 +4,9 @@ target/
 dbt_packages/
 logs/
 data/
+.vscode/
+package-lock.yml
+.user.yml
 
 .venv
 venv

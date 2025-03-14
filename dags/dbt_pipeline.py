@@ -1,29 +1,44 @@
-from airflow import DAG
-from airflow.operators.bash import BashOperator
-from airflow.operators.slack import SlackAPIPostOperator
 from datetime import datetime, timedelta
-# DAG settings
+from airflow import DAG
+from airflow.operators.python import PythonOperator
+from airflow.operators.bash import BashOperator
+
+import balance_monitor
+
+# Define default arguments for the DAG
 default_args = {
-    "start_date": datetime(2025, 3, 13),
-    "retries": 2,
-    "retry_delay": timedelta(minutes=5),
+    'retries': 1,
+    'retry_delay': timedelta(minutes=5),
+    'start_date': datetime(2025, 3, 14),  # Starting from today
 }
-with DAG("dbt_airflow_pipeline",
-         default_args=default_args,
-         schedule_interval="@daily",
-         catchup=False) as dag:
-    # Task 1: Run dbt models
-    dbt_build = BashOperator(
-        task_id="dbt_build",
-        bash_command="dbt build",
-    )
-    # Task 2: Send Slack Alert on Failure
-    slack_alert = SlackAPIPostOperator(
-        task_id="slack_alert",
-        token="slack-api-token",
-        text="🚨 dbt run failed in Airflow! Check logs.",
-        channel="#alerts",
-        trigger_rule="one_failed"
-    )
-    # Task dependencies
-    dbt_build >> slack_alert
+
+# Create the DAG
+dag = DAG(
+    'daily_pipeline',
+    default_args=default_args,
+    description='Daily execution of DBT models and balance monitor script',
+    schedule_interval='0 9 * * *',
+    catchup=False,
+)
+
+script_path = 'balance_monitor.py'
+
+# Task to run all DBT models
+run_dbt_models = BashOperator(
+    task_id='run_dbt_models',
+    bash_command=f'dbt build',
+    dag=dag,
+)
+
+# Define the task to run the balance monitor script
+run_balance_monitor_task = PythonOperator(
+    task_id='run_balance_monitor',
+    python_callable=balance_monitor.main,
+    dag=dag,
+)
+
+# Set the task dependencies
+run_dbt_models >> run_balance_monitor_task
+
+if __name__ == "__main__":
+    dag.cli()
