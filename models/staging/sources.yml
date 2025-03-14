@@ -1,0 +1,6 @@
+sources:
+  - name: db
+    schema: main
+    tables:
+      - name: organizations
+      - name: invoices

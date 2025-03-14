@@ -1,0 +1,113 @@
+models:
+  - name: fact_invoices
+    description: >
+      A core fact table containing invoice information. This model tracks all invoices and their relationships,
+      with additional enriched fields for analysis. It captures payment details, currency information,
+      and provides a complete view of the invoice lifecycle.
+    columns:
+      - name: invoice_id
+        description: Unique identifier for each invoice
+        tests:
+          - unique
+          - not_null
+      - name: parent_invoice_id
+        description: Reference to parent invoice (if this is a child invoice)
+      - name: invoice_relationship_type
+        description: >
+          Indicates whether this is a 'PARENT' invoice or a 'CHILD' invoice derived from
+          the presence of a parent_invoice_id
+      - name: transaction_id
+        description: Identifier linking to the originating transaction
+      - name: organization_id
+        description: Identifier of the organization associated with this invoice
+        tests:
+          - relationships:
+              to: ref('dim_organizations')
+              field: organization_id
+              severity: warn
+      - name: type
+        description: Numerical code indicating the invoice type
+      - name: status
+        description: Current status of the invoice
+        tests:
+          - accepted_values:
+              values: ['REFUNDED', 'OPEN', 'CREDITED', 'CANCELLED', 'UNPAYABLE','PROCESSING','FAILED','PENDING','AWAITING_PAYMENT','SKIPPED','PAID']
+              severity: warn
+      - name: currency
+        description: Original currency of the invoice amount
+      - name: payment_currency
+        description: Currency used for payment (may differ from invoice currency)
+      - name: is_same_currency
+        description: Boolean flag indicating whether the invoice and payment currency are the same
+      - name: payment_method
+        description: Method used to make payment on the invoice
+      - name: amount
+        description: Original invoice amount in the invoice currency
+        tests:
+          - not_null
+      - name: payment_amount
+        description: Amount paid in the payment currency
+      - name: fx_rate
+        description: Exchange rate applied to convert the invoice amount
+      - name: fx_rate_payment
+        description: Exchange rate applied during payment processing
+      - name: created_at
+        description: Timestamp when invoice was created
+        tests:
+          - not_null
+      - name: loaded_at
+        description: Timestamp when this record was loaded into the data warehouse
+  - name: dim_organizations
+    description: >
+      A dimensional table containing organization information. This model tracks key attributes of organizations
+      including payment dates, geographical information, and lifecycle timestamps. It serves as a core reference
+      table for organization-related analysis.
+    columns:
+      - name: organization_id
+        description: Unique identifier for each organization
+        tests:
+          - unique
+          - not_null
+      - name: first_payment_date
+        description: Date when the organization made their first payment
+      - name: last_payment_date
+        description: Date when the organization made their most recent payment
+      - name: legal_entity_country_code
+        description: Country code representing the organization's legal entity location
+      - name: created_date
+        description: Date when the organization record was created
+        tests:
+          - not_null
+      - name: updated_date
+        description: Date when the organization record was last updated
+      - name: loaded_at
+        description: Timestamp when this record was loaded into the data warehouse
+  - name: fact_daily_balance
+    description: >
+      A fact table that provides a daily snapshot of organization balances. This model aggregates invoice
+      and payment data to calculate daily balances for each organization, allowing for time-series analysis
+      of financial positions.
+    columns:
+      - name: unique_id
+        description: Unique identifier composed of analyzed_date and organization_id
+        tests:
+          - unique
+          - not_null
+      - name: analyzed_date
+        description: The date for which the balance is calculated
+        tests:
+          - not_null
+      - name: organization_id
+        description: Identifier of the organization associated with this balance
+      - name: invoiced_amount
+        description: Total amount invoiced to the organization converted to a standard currency
+        tests:
+          - not_null
+      - name: paid_amount
+        description: Total amount paid by the organization converted to a standard currency
+        tests:
+          - not_null
+      - name: daily_balance
+        description: The difference between invoiced and paid amounts for the day
+        tests:
+          - not_null

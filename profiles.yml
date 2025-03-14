@@ -1,9 +1,6 @@
-duckdb:
+deel_interview:
   outputs:
-    dev:
+    local:
       type: duckdb
-      path: "{{ env_var('JAFFLE_DB_PATH', './reports/jaffle_shop.duckdb') }}"
-      database: "{{ env_var('JAFFLE_DB_NAME', 'jaffle_shop') }}"
-      schema: "{{ env_var('JAFFLE_TARGET_SCHEMA', 'analytics') }}"
-      threads: 4
-  target: dev
+      path: 'deel_interview.duckdb'
+  target: local
