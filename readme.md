@@ -7,13 +7,13 @@ Below is a brief overview of each file and its role in the workflow:
 
 ### Python Scripts
 - **balance_monitor.py**  
-  Monitors the daily balances in your data warehouse, potentially sending alerts when certain thresholds or anomalies are detected.
+  Monitors the daily balances in the DB, potentially sending alerts when certain thresholds or anomalies are detected.
 
 - **data_loading.py**  
-  Loads raw data from external sources (e.g., CSV files, APIs) into your data warehouse. This step precedes running any transformations in dbt.
+  Loads raw data from external sources (e.g., CSV files, APIs) into the DB. This step precedes running any transformations in dbt.
 
 - **dbt_pipeline.py**  
-  Orchestrates the dbt workflow (e.g., `dbt run`, `dbt test`) and can be scheduled in a CI/CD pipeline or a cron job to keep analytics data up to date.
+  Orchestrates the dbt workflow (e.g., `dbt run`, `dbt test`) and can be scheduled in a DAG to keep analytics data up to date.
 
 ### dbt Models (SQL)
 - **stg_organizations.sql**  
@@ -33,11 +33,28 @@ Below is a brief overview of each file and its role in the workflow:
 
 ### dbt Configuration (YAML)
 - **sources.yml**  
-  Defines your data sources—for example, the `main` schema along with the `organizations` and `invoices` tables. :contentReference[oaicite:0]{index=0}
+  Defines data sources—for example, the `main` schema along with the `organizations` and `invoices` tables. :contentReference[oaicite:0]{index=0}
 
 - **marts.yml**  
-  Describes your analytics “marts,” including the `fact_invoices`, `dim_organizations`, and `fact_daily_balance` models. Each column is documented, and dbt tests (like `unique`, `not_null`, and `accepted_values`) are specified to maintain data quality. :contentReference[oaicite:1]{index=1}
+  Describes analytics “marts,” including the `fact_invoices`, `dim_organizations`, and `fact_daily_balance` models. Each column is documented, and dbt tests (like `unique`, `not_null`, and `accepted_values`) are specified to maintain data quality. :contentReference[oaicite:1]{index=1}
 
-## Project Structure
-A common structure for your project might look like this:
+## Getting Started
 
+1. **Set Up a Virtual Environment**  
+   It’s recommended to use a virtual environment (e.g., `venv` or `conda`) to keep dependencies isolated.
+
+2. **Install Dependencies**  
+   - Install Python dependencies (e.g., `dbt-core`, `pandas`, etc.) via `pip`.
+   - Ensure the warehouse driver or adapter is properly configured
+
+3. **Configure Database Connection**  
+   - Update the `profiles.yml` (in `~/.dbt` directory) to match your DB credentials.
+
+4. **Load Raw Data**  
+   - Run `python data_loading.py` to load raw data into the warehouse.
+
+5. **Run dbt**  
+   - Execute `dbt build` to run the data models (`stg_organizations.sql`, `stg_invoices.sql`, etc.) and validate data integrity (e.g., `unique` and `not_null` tests for key columns).
+
+6. **Monitor Balances**  
+   - Run `python balance_monitor.py` to monitor the daily balances in the warehouse.
